@@ -1,4 +1,8 @@
 SuperStrict
+Framework BRL.Blitz
+Import BRL.Max2D
+Import BRL.Map
+Import BRL.Timer
 Import sidesign.minib3d
 
 Include "config.bmx"
@@ -13,11 +17,6 @@ Type TStation
 		Self.DestinationLinks = New TList
 	EndMethod
 	
-	Rem
-	Method Draw()
-		DrawRect( Self.x, Self.y, 10, 10 )
-	EndMethod
-	EndRem
 EndType
 
 Type TDestLink
@@ -129,6 +128,7 @@ Type TOrder
 	Const TASK_GOTO_AND_UNLOAD:Int 	= 3
 	Const TASK_GOTO_AND_LOAD:Int 	= 4
 	Const TASK_GOTO_AND_DOSHIT:Int	= 5
+	
 	Field Target:TStation
 	Field Task:Int
 	
@@ -255,13 +255,12 @@ Type TCameraController
 			Self.xg :- mxs / divisor
 			Self.yg :+ mys / divisor
 		EndIf
+		
 		If mzs Then
 			Self.zg :+ mzs / Abs(camheight / 20.0)
-			DebugLog(camheight + "->" + Abs(camheight / 5.0))
 		EndIf
 		If Self.zg < 0 And camheight + Self.zg < -250 Then Self.zg = 0
 		If Self.zg > 0 And camheight + Self.zg > -5 Then Self.zg = 0
-	
 	
 		TranslateEntity( Camera,  Self.xg, Self.yg, 0)
 		MoveEntity( Camera, 0, 0, Self.zg )
@@ -305,20 +304,7 @@ PositionEntity( CamCon.Camera, 0, -30, -20 )
 RotateEntity( CamCon.Camera, -45, 0, 0 )
 CameraClsColor(CamCon.Camera, 125, 200, 255)
 
-Local CloudPlane:TMesh = CreateMesh()
-Local CloudSurf:TSurface = CreateSurface(CloudPlane)
-Local CloudV:Int[4]
-CloudV[0] = AddVertex(CloudSurf, -1, -1, 0, 0, 0)
-CloudV[1] = AddVertex(CloudSurf, 1, -1, 0, 1, 0)
-CloudV[2] = AddVertex(CloudSurf, -1, 1, 0, 0, 1)
-CloudV[3] = AddVertex(CloudSurf, 1, 1, 0, 1, 1)
-AddTriangle(CloudSurf, 2, 1, 0)
-AddTriangle(CloudSurf, 1, 2, 3)
-UpdateNormals(CloudPlane)
-ScaleMesh(CloudPlane, 100, 100, 1)
-Local CloudTexture:TTexture = LoadTexture("GFX/tex/clooouuud.png", 2)
-ScaleTexture CloudTexture, 0.5, 0.5
-EntityTexture(CloudPlane, CloudTexture)
+Local CloudPlane:TEntity = CreateClooouuud()
 PositionEntity CloudPlane, 0, 0, 10
 
 Local Light:TLight = CreateLight()
@@ -373,7 +359,7 @@ Function InitiateGraphics()
 			If GraphicsModeExists( DesktopWidth(), DesktopHeight(), DesktopDepth(), DesktopHertz() )
 				gwidth = DesktopWidth()
 				gheight = DesktopHeight()
-				galias = 8
+				galias = 0
 				gdepth = DesktopDepth()
 				gmode = 1
 				ghertz = DesktopHertz()
@@ -390,9 +376,30 @@ Function InitiateGraphics()
 		gmode = 0
 	EndTry
 	
-	AppTitle = "CounterPillow wins for all eternity."
+	AppTitle = "BlimpTycoon v0.0001. Your face."
 	Print gmode
 	Graphics3D gwidth, gheight, gdepth, gmode, ghertz
 	SetBlend(AlphaBlend)
 	AntiAlias(galias)
+EndFunction
+
+Function CreateClooouuud:TEntity()
+	Local CloudPlane:TMesh = CreateMesh()
+	Local CloudSurf:TSurface = CreateSurface(CloudPlane)
+	
+	AddVertex(CloudSurf, -1, -1, 0, 0, 0)
+	AddVertex(CloudSurf, 1, -1, 0, 1, 0)
+	AddVertex(CloudSurf, -1, 1, 0, 0, 1)
+	AddVertex(CloudSurf, 1, 1, 0, 1, 1)
+	AddTriangle(CloudSurf, 2, 1, 0)
+	AddTriangle(CloudSurf, 1, 2, 3)
+	UpdateNormals(CloudPlane)
+	
+	ScaleMesh(CloudPlane, 100, 100, 1)
+	
+	Local CloudTexture:TTexture = LoadTexture("GFX/tex/clooouuud.png", 2)
+	ScaleTexture CloudTexture, 0.5, 0.5
+	EntityTexture(CloudPlane, CloudTexture)
+	
+	Return TEntity(CloudPlane)
 EndFunction
