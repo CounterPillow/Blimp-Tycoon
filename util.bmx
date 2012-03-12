@@ -28,8 +28,8 @@ Type TCameraController
 		If mzs Then
 			Self.yg :+ mzs * (camheight / 50.0)
 		EndIf
-		If Self.yg > 0 And camheight + Self.yg > 250 Then Self.yg = 0
-		If Self.yg < 0 And camheight + Self.yg < 5 Then Self.yg = 0
+		If Self.yg < 0 And camheight > 250 Then Self.yg = 0
+		If Self.yg > 0 And camheight < 5 Then Self.yg = 0
 	
 		TranslateEntity( Camera,  Self.xg, 0, Self.zg)
 		MoveEntity( Camera, 0, 0, Self.yg )
@@ -48,6 +48,8 @@ Type TCameraController
 EndType
 
 Type TProfitText
+	Global List:TList = New TList
+	
 	Field Caption:String
 	Field x:Int
 	Field y:Int
@@ -66,6 +68,7 @@ Type TProfitText
 		p.r = r
 		p.g = g
 		p.b = b
+		TProfitText.List.AddLast(p)
 		Return p
 	EndFunction
 	

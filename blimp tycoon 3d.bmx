@@ -156,7 +156,7 @@ Type TOrder
 					Next
 					
 					CameraProject( CamCon.Camera, EntityX(blimp.Entity), EntityY(blimp.Entity), EntityZ(blimp.Entity) )
-					ProfitTexts.AddLast(TProfitText.Create( Currency + totalprofit, blimp.Entity, 0, 255, 0))
+					TProfitText.Create( Currency + totalprofit, blimp.Entity, 0, 255, 0)
 				EndIf
 			Default
 				DebugLog( "lolwat. Wtf is " + Self.Task + "?!" )
@@ -216,7 +216,8 @@ Local c:TCargo = TCargo.Create( blimp.Target, TCargo.TYPE_PASSENGER, 30 )
 blimp.Cargo.AddLast(c)
 
 Global Moneez:Int = 0
-Global Currency:String = "$"
+Global Currency:String = String(Config.ValueForKey("currency"))
+If Currency = "" Then Currency = "$"
 
 Global CamCon:TCameraController = TCameraController.CreateCameraController( 0.8 )
 PositionEntity( CamCon.Camera, 0, 20, -30 )
@@ -246,8 +247,6 @@ EntityColor zcone, 0, 0, 255
 RotateEntity zcone, 90, 0, 0
 PositionEntity zcone, 0, 0, 2
 
-Global ProfitTexts:TList = New TList
-
 Repeat
 	CamCon.UpdateControls()
 	blimp.Update()
@@ -256,18 +255,20 @@ Repeat
 	RenderWorld()
 	
 	BeginMax2D()
+	SetBlend(AlphaBlend)
 	
-	For Local p:TProfitText = EachIn ProfitTexts
+	For Local p:TProfitText = EachIn TProfitText.List
 		p.Update()
 		If p.FramesDone > 120 Then
 			DebugLog("STFU TEXT")
-			ProfitTexts.Remove(p)
+			TProfitText.List.Remove(p)
 		EndIf
 	Next
 	
 	'Super Advanced HUD
-	DrawText "MoneyFoods: " + Moneez, 0, 0
+	DrawText "MoneyFoods: " + Currency + " " + Moneez, 0, 0
 	DrawText "Camera Coords: " + EntityX(CamCon.Camera) + ", " + EntityY(CamCon.Camera) + ", " + EntityZ(CamCon.Camera), 0, 12
+	DrawText "Camera G: " + CamCon.xg + ", " + CamCon.yg + ", " + CamCon.zg, 0, 24
 	EndMax2D()
 	Flip 1
 	Cls
@@ -314,7 +315,6 @@ Function InitiateGraphics()
 	AppTitle = "BlimpTycoon v0.0001. Your face."
 	Print gmode
 	Graphics3D gwidth, gheight, gdepth, gmode, ghertz
-	SetBlend(AlphaBlend)
 	AntiAlias(galias)
 EndFunction
 
