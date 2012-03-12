@@ -6,6 +6,7 @@ Import BRL.Timer
 Import sidesign.minib3d
 
 Include "config.bmx"
+Include "util.bmx"
 
 Type TStation
 	Field Entity:TEntity
@@ -56,7 +57,7 @@ Type TBlimp
 	EndMethod
 	
 	Method MoveToTarget()
-		RotateEntity( Self.Entity, 0, DeltaYaw(Self.Entity, Target.Entity), 0)
+		RotateEntity( Self.Entity, DeltaPitch(Self.Entity, Target.Entity), DeltaYaw(Self.Entity, Target.Entity), 0)
 		MoveEntity( Self.Entity, 0, 0, Self.Speed )
 	EndMethod
 	
@@ -65,7 +66,7 @@ Type TBlimp
 			Local distance:Float = EntityDistance( Self.Entity, Target.Entity )
 			Self.Speed = Min( Self.Speed + 1.0 / Self.Template.MaxSpeed * Self.Template.AccelFactor, Self.Template.MaxSpeed )
 			MoveToTarget()
-			If distance < 0.1
+			If distance < 0.3
 				DebugLog( "Arrived!" )
 				CurrentOrder.Execute( Self )
 				GetNextOrderInQueue()
@@ -182,42 +183,6 @@ Type TBlimpTemplate
 	EndFunction
 EndType
 
-Type TProfitText	'FIXME - transition from 2d to 3d. :o
-	Field Caption:String
-	Field x:Int
-	Field y:Int
-	Field yoff:Int
-	Field Emitter:TEntity
-	Field Alpha:Float = 1.0
-	Field FramesDone:Int = 0
-	Field r:Int
-	Field g:Int
-	Field b:Int
-	
-	Function Create:TProfitText( Caption:String, Emitter:TEntity, r:Int, g:Int, b:Int )
-		Local p:TProfitText = New TProfitText
-		p.Emitter = Emitter
-		p.Caption = Caption
-		p.r = r
-		p.g = g
-		p.b = b
-		Return p
-	EndFunction
-	
-	Method Update()
-		CameraProject( CamCon.Camera, EntityX(Self.Emitter), EntityY(Self.Emitter), EntityZ(Self.Emitter) )
-		Self.x = ProjectedX()
-		Self.y = ProjectedY()
-		SetAlpha( Self.Alpha )
-		SetColor( Self.r, Self.g, Self.b )
-		DrawText( Self.Caption, Self.x, Self.y + Self.yoff )
-		Self.yoff :- 1
-		Self.Alpha = Self.Alpha * 0.97
-		Self.FramesDone :+ 1
-		SetColor( 255, 255, 255 )
-		SetAlpha( 1.0 )
-	EndMethod
-EndType
 
 Type TIsland
 	Field Entity:TEntity
@@ -229,54 +194,6 @@ Type TIsland
 	EndMethod
 EndType
 
-Type TCameraController
-	Field Camera:TCamera
-	Field xg:Float
-	Field yg:Float
-	Field zg:Float
-	Field drag:Float	' I don't know if this is the right term for this, but I don't care either. ^-^
-	
-	Method New()
-		Camera = CreateCamera()
-	EndMethod
-	
-	Method UpdateControls()
-		Local mdr:Int, mxs:Int, mys:Int, mx:Int, my:Int, mzs:Int, camheight:Float
-		mdr = MouseDown(2)
-		mxs = MouseXSpeed()
-		mys = MouseYSpeed()
-		mzs = MouseZSpeed()
-		mx = MouseX()
-		my = MouseY()
-		camheight = EntityZ(Self.Camera)
-		
-		If mdr Then
-			Local divisor:Float = Max((100.0 - Abs(camheight / 2.5)), 5.0)
-			Self.xg :- mxs / divisor
-			Self.yg :+ mys / divisor
-		EndIf
-		
-		If mzs Then
-			Self.zg :+ mzs / Abs(camheight / 20.0)
-		EndIf
-		If Self.zg < 0 And camheight + Self.zg < -250 Then Self.zg = 0
-		If Self.zg > 0 And camheight + Self.zg > -5 Then Self.zg = 0
-	
-		TranslateEntity( Camera,  Self.xg, Self.yg, 0)
-		MoveEntity( Camera, 0, 0, Self.zg )
-		
-		Self.xg :* Self.drag
-		Self.yg :* Self.drag
-		Self.zg :* Self.drag
-		
-	EndMethod
-	
-	Function CreateCameraController:TCameraController( drag:Float )
-		Local cc:TCameraController = New TCameraController
-		cc.drag = drag
-		Return cc
-	EndFunction
-EndType
 
 Global Config:TMap = ParseConfig("conf/game.cfg")
 
@@ -287,7 +204,9 @@ Local town1:TStation = New TStation
 town1.Entity = CreateCube()
 PositionEntity town1.Entity, 4, 0, 3
 
-Local myblimp:TBlimpTemplate = TBlimpTemplate.Create( 0.25, 20, 200, 0.05, CreateSphere())
+Local blimpcone:TMesh = CreateCone()
+RotateMesh blimpcone, 90, 0, 0
+Local myblimp:TBlimpTemplate = TBlimpTemplate.Create( 0.25, 20, 200, 0.05, blimpcone)
 
 Local blimp:TBlimp = TBlimp.Create( myblimp, -15, -15 )
 blimp.Target = town1
@@ -300,17 +219,32 @@ Global Moneez:Int = 0
 Global Currency:String = "$"
 
 Global CamCon:TCameraController = TCameraController.CreateCameraController( 0.8 )
-PositionEntity( CamCon.Camera, 0, -30, -20 )
-RotateEntity( CamCon.Camera, -45, 0, 0 )
+PositionEntity( CamCon.Camera, 0, 20, -30 )
+RotateEntity( CamCon.Camera, 45, 0, 0 )
 CameraClsColor(CamCon.Camera, 125, 200, 255)
 
 Local CloudPlane:TEntity = CreateClooouuud()
-PositionEntity CloudPlane, 0, 0, 10
+PositionEntity CloudPlane, 0, -10, 0
 
 Local Light:TLight = CreateLight()
-RotateEntity(Light, -45, 45, 0)
+RotateEntity(Light, 45, 45, 0)
 
 Local FrameTimer:TTimer = CreateTimer(60)
+
+Local xcone:TEntity = CreateCone()
+EntityColor xcone, 255, 0, 0
+RotateEntity xcone, 90, 90, 0
+PositionEntity xcone, -2, 0, 0
+
+Local ycone:TEntity = CreateCone()
+EntityColor ycone, 0, 255, 0
+RotateEntity ycone, 0, 0, 0
+PositionEntity ycone, 0, 2, 0
+
+Local zcone:TEntity = CreateCone()
+EntityColor zcone, 0, 0, 255
+RotateEntity zcone, 90, 0, 0
+PositionEntity zcone, 0, 0, 2
 
 Global ProfitTexts:TList = New TList
 
@@ -333,6 +267,7 @@ Repeat
 	
 	'Super Advanced HUD
 	DrawText "MoneyFoods: " + Moneez, 0, 0
+	DrawText "Camera Coords: " + EntityX(CamCon.Camera) + ", " + EntityY(CamCon.Camera) + ", " + EntityZ(CamCon.Camera), 0, 12
 	EndMax2D()
 	Flip 1
 	Cls
@@ -383,23 +318,3 @@ Function InitiateGraphics()
 	AntiAlias(galias)
 EndFunction
 
-Function CreateClooouuud:TEntity()
-	Local CloudPlane:TMesh = CreateMesh()
-	Local CloudSurf:TSurface = CreateSurface(CloudPlane)
-	
-	AddVertex(CloudSurf, -1, -1, 0, 0, 0)
-	AddVertex(CloudSurf, 1, -1, 0, 1, 0)
-	AddVertex(CloudSurf, -1, 1, 0, 0, 1)
-	AddVertex(CloudSurf, 1, 1, 0, 1, 1)
-	AddTriangle(CloudSurf, 2, 1, 0)
-	AddTriangle(CloudSurf, 1, 2, 3)
-	UpdateNormals(CloudPlane)
-	
-	ScaleMesh(CloudPlane, 100, 100, 1)
-	
-	Local CloudTexture:TTexture = LoadTexture("GFX/tex/clooouuud.png", 2)
-	ScaleTexture CloudTexture, 0.5, 0.5
-	EntityTexture(CloudPlane, CloudTexture)
-	
-	Return TEntity(CloudPlane)
-EndFunction
