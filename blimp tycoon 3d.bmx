@@ -185,13 +185,60 @@ EndType
 
 
 Type TIsland
-	Field Entity:TEntity
+	Field Mesh:TMesh
 	Field Towns:TList
-	Field Population:Int[,]	' 2 dimensional arrays, right in ma butt!
+	Field Terrain:Int[,]	' 2 dimensional arrays, right in ma butt!
 	
 	Method New()
 		Self.Towns = New TList
 	EndMethod
+	
+	Method BuildGeometry()
+		Self.Mesh = CreateMesh()
+		Local surf:TSurface = CreateSurface( Self.Mesh )
+		Local x:Int, y:Int
+		For x = 0 To Self.Terrain.Dimensions()[0] - 1
+			For y = 0 To Self.Terrain.Dimensions()[1] - 1
+				If Self.Terrain[x, y] > -1
+					Local v0:Int, v1:Int, v2:Int, v3:Int
+					v0 = AddVertex(surf, -1 + x * 2	, Self.Terrain[x, y] / 5.0	, -1 + y * 2, 0, 0)	'upper left
+					v1 = AddVertex(surf, 1 + x * 2	, Self.Terrain[x, y] / 5.0	, -1 + y * 2, 1, 0)	'upper right
+					v2 = AddVertex(surf, -1 + x * 2	, Self.Terrain[x, y] / 5.0	, 1 + y * 2	, 0, 1)	'lower left
+					v3 = AddVertex(surf, 1 + x * 2	, Self.Terrain[x, y] / 5.0	, 1 + y * 2	, 1, 1)	'lower right
+					AddTriangle(surf, v2, v1, v0)
+					AddTriangle(surf, v1, v2, v3)
+				EndIf
+			Next
+		Next
+		EntityColor(Self.Mesh, 0, 255, 0)
+		UpdateNormals(Self.Mesh)
+	EndMethod
+	
+	Method ReadTerrainData(stream:TStream)
+		Local width:Int = Int(ReadLine(stream))
+		Local height:Int = Int(ReadLine(stream))
+		Local x:Int, y:Int
+		Local line:String[]
+		
+		For y = 0 To height - 1
+			line = ReadLine(stream).Split(",")
+			For x = 0 To width - 1
+				Terrain[x, y] = Int(line[x])
+			Next
+		Next
+		CloseStream(stream)
+	EndMethod
+	
+	Function Create:TIsland(w:Int, h:Int)
+		Local is:TIsland = New TIsland
+		is.Terrain = New Int[w, h]
+		For Local x:Int = 0 To w - 1
+			For Local y:Int = 0 To h - 1
+				is.Terrain[x, y] = -1
+			Next
+		Next
+		Return is
+	EndFunction
 EndType
 
 
@@ -247,9 +294,17 @@ EntityColor zcone, 0, 0, 255
 RotateEntity zcone, 90, 0, 0
 PositionEntity zcone, 0, 0, 2
 
+Local TestIsland:TIsland = TIsland.Create(10, 10)
+TestIsland.ReadTerrainData(ReadFile("testisland.txt"))
+TestIsland.BuildGeometry()
+
+Local wfon:Int
+
 Repeat
 	CamCon.UpdateControls()
 	blimp.Update()
+	If KeyHit(KEY_W) Then wfon = 1 - wfon
+	Wireframe(wfon)
 	
 	UpdateWorld()
 	RenderWorld()
@@ -305,7 +360,7 @@ Function InitiateGraphics()
 			EndIf
 		EndIf
 	Catch e:String
-		Print e
+		WriteStderr(e)
 		gwidth = 800
 		gheight = 600
 		galias = 0
@@ -313,7 +368,6 @@ Function InitiateGraphics()
 	EndTry
 	
 	AppTitle = "BlimpTycoon v0.0001. Your face."
-	Print gmode
 	Graphics3D gwidth, gheight, gdepth, gmode, ghertz
 	AntiAlias(galias)
 EndFunction
