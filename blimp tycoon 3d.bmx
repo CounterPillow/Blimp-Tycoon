@@ -188,6 +188,7 @@ Type TIsland
 	Field Mesh:TMesh
 	Field Towns:TList
 	Field Terrain:Int[,]	' 2 dimensional arrays, right in ma butt!
+	Field HeightData:Float[,]
 	
 	Method New()
 		Self.Towns = New TList
@@ -197,16 +198,23 @@ Type TIsland
 		Self.Mesh = CreateMesh()
 		Local surf:TSurface = CreateSurface( Self.Mesh )
 		Local x:Int, y:Int
+		Local VertData:Int[,] = CreateNegativeOneArray(Self.Terrain.Dimensions()[0] + 1, Self.Terrain.Dimensions()[1] + 1)
 		For x = 0 To Self.Terrain.Dimensions()[0] - 1
 			For y = 0 To Self.Terrain.Dimensions()[1] - 1
 				If Self.Terrain[x, y] > -1
 					Local v0:Int, v1:Int, v2:Int, v3:Int
+					Rem
 					v0 = AddVertex(surf, -1 + x * 2	, Self.Terrain[x, y] / 5.0	, -1 + y * 2, 0, 0)	'upper left
 					v1 = AddVertex(surf, 1 + x * 2	, Self.Terrain[x, y] / 5.0	, -1 + y * 2, 1, 0)	'upper right
 					v2 = AddVertex(surf, -1 + x * 2	, Self.Terrain[x, y] / 5.0	, 1 + y * 2	, 0, 1)	'lower left
 					v3 = AddVertex(surf, 1 + x * 2	, Self.Terrain[x, y] / 5.0	, 1 + y * 2	, 1, 1)	'lower right
-					AddTriangle(surf, v2, v1, v0)
-					AddTriangle(surf, v1, v2, v3)
+					EndRem
+					If VertData[x, y] 			= -1 Then VertData[x, y]			= AddVertex(surf, -1 + x * 2	, Self.HeightData[x, y]	, -1 + y * 2, 0, 0)	'upper left
+					If VertData[x + 1, y] 		= -1 Then VertData[x + 1, y]		= AddVertex(surf, 1 + x * 2	, Self.HeightData[x, y]	, -1 + y * 2, 1, 0)	'upper right
+					If VertData[x, y + 1] 		= -1 Then VertData[x, y + 1]		= AddVertex(surf, -1 + x * 2	, Self.HeightData[x, y]	, 1 + y * 2	, 0, 1)	'lower left
+					If VertData[x + 1, y + 1] 	= -1 Then VertData[x + 1, y + 1]	= AddVertex(surf, 1 + x * 2	, Self.HeightData[x, y]	, 1 + y * 2	, 1, 1)	'lower right
+					AddTriangle(surf, VertData[x, y + 1], VertData[x + 1, y], VertData[x, y])
+					AddTriangle(surf, VertData[x + 1, y], VertData[x, y + 1], VertData[x + 1, y + 1])
 				EndIf
 			Next
 		Next
@@ -219,6 +227,7 @@ Type TIsland
 		Local height:Int = Int(ReadLine(stream))
 		Local x:Int, y:Int
 		Local line:String[]
+		Self.HeightData = New Float[width + 1, height + 1]
 		
 		For y = 0 To height - 1
 			line = ReadLine(stream).Split(",")
@@ -226,6 +235,14 @@ Type TIsland
 				Terrain[x, y] = Int(line[x])
 			Next
 		Next
+		ReadLine(stream)	' Blank line
+		For y = 0 To height
+			line = ReadLine(stream).Split(",")
+			DebugLog(Len(line))
+			For x = 0 To width
+				HeightData[x, y] = Float(line[x])
+			Next
+		Next	
 		CloseStream(stream)
 	EndMethod
 	
@@ -295,7 +312,7 @@ RotateEntity zcone, 90, 0, 0
 PositionEntity zcone, 0, 0, 2
 
 Local TestIsland:TIsland = TIsland.Create(10, 10)
-TestIsland.ReadTerrainData(ReadFile("testisland.txt"))
+TestIsland.ReadTerrainData(ReadFile("newtestisland.txt"))
 TestIsland.BuildGeometry()
 
 Local wfon:Int

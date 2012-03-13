@@ -107,3 +107,16 @@ Function CreateClooouuud:TEntity()
 	
 	Return TEntity(CloudPlane)
 EndFunction
+
+Function CreateNegativeOneArray:Int[,](w:Int, h:Int)
+	Local a:Int[,] = New Int[w,h]
+	Local x:Int, y:Int
+	
+	For x = 0 To w - 1
+		For y = 0 To h - 1
+			a[x, y] = -1
+		Next
+	Next
+	
+	Return a
+EndFunction
