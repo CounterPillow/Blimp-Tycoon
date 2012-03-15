@@ -238,7 +238,6 @@ Type TIsland
 		ReadLine(stream)	' Blank line
 		For y = 0 To height
 			line = ReadLine(stream).Split(",")
-			DebugLog(Len(line))
 			For x = 0 To width
 				HeightData[x, y] = Float(line[x])
 			Next
@@ -258,7 +257,7 @@ Type TIsland
 	EndFunction
 EndType
 
-
+Global CLIParams:TMap = GetCLIArgs()
 Global Config:TMap = ParseConfig("conf/game.cfg")
 
 InitiateGraphics()
@@ -351,6 +350,8 @@ Function InitiateGraphics()
 	SetGraphicsDriver GLMax2DDriver()
 	Local gwidth:Int, gheight:Int, gdepth:Int, gmode:Int, ghertz:Int, galias:Int
 	Try
+		If CLIParams.Contains("--fallback") Then Throw "Using fallback graphics configuration."
+		
 		gwidth = Int(String(Config.ValueForKey("graphicswidth")))
 		gheight = Int(String(Config.ValueForKey("graphicsheight")))
 		gdepth = Int(String(Config.ValueForKey("graphicsdepth")))
@@ -377,7 +378,7 @@ Function InitiateGraphics()
 			EndIf
 		EndIf
 	Catch e:String
-		WriteStderr(e)
+		Print(e)
 		gwidth = 800
 		gheight = 600
 		galias = 0

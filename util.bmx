@@ -120,3 +120,18 @@ Function CreateNegativeOneArray:Int[,](w:Int, h:Int)
 	
 	Return a
 EndFunction
+
+Function GetCLIArgs:TMap()
+	Local i:Int
+	Local lastcmd:String
+	Local map:TMap = New TMap
+	For i = 1 To Len(AppArgs) - 1
+		If AppArgs[i][..1] = "-"	' is it a new option?
+			lastcmd = AppArgs[i]
+			map.Insert(lastcmd, New TList)
+		Else
+			TList(map.ValueForKey(lastcmd)).AddLast(AppArgs[i])	' it's an argument for the last option!
+		EndIf
+	Next
+	Return map
+EndFunction
