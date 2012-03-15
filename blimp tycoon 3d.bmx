@@ -209,6 +209,9 @@ Type TIsland
 					v2 = AddVertex(surf, -1 + x * 2	, Self.Terrain[x, y] / 5.0	, 1 + y * 2	, 0, 1)	'lower left
 					v3 = AddVertex(surf, 1 + x * 2	, Self.Terrain[x, y] / 5.0	, 1 + y * 2	, 1, 1)	'lower right
 					EndRem
+					' Issue with U/V here:
+					' 1.0 -> 0.0 -> 0.0 -> 0.0 -> 0.0
+					' Needs to check for VertexU and VertexV of the last Vertex, and then act according to that. (= Not VertexU(derp)?)
 					If VertData[x, y] 			= -1 Then VertData[x, y]			= AddVertex(surf, -1 + x * 2	, Self.HeightData[x, y]	, -1 + y * 2, 0, 0)	'upper left
 					If VertData[x + 1, y] 		= -1 Then VertData[x + 1, y]		= AddVertex(surf, 1 + x * 2	, Self.HeightData[x, y]	, -1 + y * 2, 1, 0)	'upper right
 					If VertData[x, y + 1] 		= -1 Then VertData[x, y + 1]		= AddVertex(surf, -1 + x * 2	, Self.HeightData[x, y]	, 1 + y * 2	, 0, 1)	'lower left
@@ -220,6 +223,7 @@ Type TIsland
 		Next
 		EntityColor(Self.Mesh, 0, 255, 0)
 		UpdateNormals(Self.Mesh)
+		EntityTexture(Self.Mesh, LoadTexture("GFX/tex/grass.png"))
 	EndMethod
 	
 	Method ReadTerrainData(stream:TStream)
