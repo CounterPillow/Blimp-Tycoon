@@ -202,26 +202,16 @@ Type TIsland
 		For x = 0 To Self.Terrain.Dimensions()[0] - 1
 			For y = 0 To Self.Terrain.Dimensions()[1] - 1
 				If Self.Terrain[x, y] > -1
-					Local v0:Int, v1:Int, v2:Int, v3:Int
-					Rem
-					v0 = AddVertex(surf, -1 + x * 2	, Self.Terrain[x, y] / 5.0	, -1 + y * 2, 0, 0)	'upper left
-					v1 = AddVertex(surf, 1 + x * 2	, Self.Terrain[x, y] / 5.0	, -1 + y * 2, 1, 0)	'upper right
-					v2 = AddVertex(surf, -1 + x * 2	, Self.Terrain[x, y] / 5.0	, 1 + y * 2	, 0, 1)	'lower left
-					v3 = AddVertex(surf, 1 + x * 2	, Self.Terrain[x, y] / 5.0	, 1 + y * 2	, 1, 1)	'lower right
-					EndRem
-					' Issue with U/V here:
-					' 1.0 -> 0.0 -> 0.0 -> 0.0 -> 0.0
-					' Needs to check for VertexU and VertexV of the last Vertex, and then act according to that. (= Not VertexU(derp)?)
 					If VertData[x, y] 			= -1 Then VertData[x, y]			= AddVertex(surf, -1 + x * 2	, Self.HeightData[x, y]	, -1 + y * 2, 0, 0)	'upper left
-					If VertData[x + 1, y] 		= -1 Then VertData[x + 1, y]		= AddVertex(surf, 1 + x * 2	, Self.HeightData[x, y]	, -1 + y * 2, 1, 0)	'upper right
-					If VertData[x, y + 1] 		= -1 Then VertData[x, y + 1]		= AddVertex(surf, -1 + x * 2	, Self.HeightData[x, y]	, 1 + y * 2	, 0, 1)	'lower left
-					If VertData[x + 1, y + 1] 	= -1 Then VertData[x + 1, y + 1]	= AddVertex(surf, 1 + x * 2	, Self.HeightData[x, y]	, 1 + y * 2	, 1, 1)	'lower right
+					If VertData[x + 1, y] 		= -1 Then VertData[x + 1, y]		= AddVertex(surf, 1 + x * 2	, Self.HeightData[x, y]	, -1 + y * 2, Not VertexU(surf, VertData[x, y]), VertexV(surf, VertData[x, y]))	'upper right
+					If VertData[x, y + 1] 		= -1 Then VertData[x, y + 1]		= AddVertex(surf, -1 + x * 2	, Self.HeightData[x, y]	, 1 + y * 2	, VertexU(surf, VertData[x, y]), Not VertexV(surf, VertData[x, y]))	'lower left
+					If VertData[x + 1, y + 1] 	= -1 Then VertData[x + 1, y + 1]	= AddVertex(surf, 1 + x * 2	, Self.HeightData[x, y]	, 1 + y * 2	, Not VertexU(surf, VertData[x, y]), Not VertexV(surf, VertData[x, y]))	'lower right
 					AddTriangle(surf, VertData[x, y + 1], VertData[x + 1, y], VertData[x, y])
 					AddTriangle(surf, VertData[x + 1, y], VertData[x, y + 1], VertData[x + 1, y + 1])
 				EndIf
 			Next
 		Next
-		EntityColor(Self.Mesh, 0, 255, 0)
+		'EntityColor(Self.Mesh, 0, 255, 0)
 		UpdateNormals(Self.Mesh)
 		EntityTexture(Self.Mesh, LoadTexture("GFX/tex/grass.png"))
 	EndMethod
