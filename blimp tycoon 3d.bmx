@@ -252,7 +252,15 @@ Type TIsland
 EndType
 
 Global CLIParams:TMap = GetCLIArgs()
-Global Config:TMap = ParseConfig("conf/game.cfg")
+Global Config:TMap
+
+Local cfgpath:String = "".Join(String[](CLIParams.ValueForKey("--config")))
+If cfgpath Then
+	DebugLog("Using alternative config " + cfgpath)
+Else
+	cfgpath = "conf/game.cfg"
+EndIf
+Config = ParseConfig(cfgpath)
 
 InitiateGraphics()
 
@@ -355,7 +363,9 @@ Function InitiateGraphics()
 		galias = Int(String(Config.ValueForKey("antialiasing")))
 		If ghertz = 0 Then ghertz = 60
 		If gdepth = 0 Then gdepth = 32
-		If Not GraphicsModeExists( gwidth, gheight, gdepth, ghertz ) Then Throw "Invalid graphics settings in config. :/"
+		If Not GraphicsModeExists( gwidth, gheight, gdepth, ghertz ) Then
+			Throw "Invalid graphics settings in config. :/ (" + gwidth + "x" + gheight + "@" + ghertz + " " + gdepth + "bit)"
+		EndIf
 		
 		If Not IsInConfig(["graphicswidth", "graphicsheight"], Config)
 			'First launch without configuration

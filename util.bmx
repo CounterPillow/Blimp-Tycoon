@@ -124,14 +124,17 @@ EndFunction
 Function GetCLIArgs:TMap()
 	Local i:Int
 	Local lastcmd:String
+	Local lastcmd_pos:Int
 	Local map:TMap = New TMap
 	For i = 1 To Len(AppArgs) - 1
 		If AppArgs[i][..1] = "-"	' is it a new option?
+			If lastcmd <> ""
+				map.Insert(lastcmd, AppArgs[lastcmd_pos+1..i])
+			EndIf
 			lastcmd = AppArgs[i]
-			map.Insert(lastcmd, New TList)
-		Else
-			TList(map.ValueForKey(lastcmd)).AddLast(AppArgs[i])	' it's an argument for the last option!
+			lastcmd_pos = i
 		EndIf
 	Next
+	map.Insert(lastcmd, AppArgs[lastcmd_pos+1..i])
 	Return map
 EndFunction
