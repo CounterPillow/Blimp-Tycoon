@@ -108,6 +108,12 @@ Function CreateClooouuud:TEntity()
 	Return TEntity(CloudPlane)
 EndFunction
 
+Function UpdateClooouuuds(cloudx:Float Var, cloudy:Float Var, cloud:TEntity)
+	cloudx :+ 0.0003
+	cloudy :+ 0.0003
+	PositionTexture(cloud.brush.tex[0], cloudx, cloudy)
+EndFunction
+
 Function CreateNegativeOneArray:Int[,](w:Int, h:Int)
 	Local a:Int[,] = New Int[w,h]
 	Local x:Int, y:Int

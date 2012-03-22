@@ -7,6 +7,7 @@ Import sidesign.minib3d
 
 Include "config.bmx"
 Include "util.bmx"
+Include "blimptemplates.bmx"
 
 Type TStation
 	Field Entity:TEntity
@@ -164,27 +165,8 @@ Type TOrder
 	EndMethod
 EndType
 
-Type TBlimpTemplate
-	Field MaxSpeed:Float
-	Field MaxCapacity:Int
-	Field Price:Int
-	Field AccelFactor:Float
-	Field Entity:TEntity
-	
-	Function Create:TBlimpTemplate( MaxSpeed:Float, MaxCapacity:Int, Price:Int, AccelFactor:Float, Entity:TEntity )
-		Local bt:TBlimpTemplate = New TBlimpTemplate
-		bt.MaxSpeed = MaxSpeed
-		bt.MaxCapacity = MaxCapacity
-		bt.Price = Price
-		bt.AccelFactor = AccelFactor
-		bt.Entity = Entity
-		HideEntity bt.Entity
-		Return bt
-	EndFunction
-EndType
-
-
 Type TIsland
+	Global Texture:TTexture
 	Field Mesh:TMesh
 	Field Towns:TList
 	Field Terrain:Int[,]	' 2 dimensional arrays, right in ma butt!
@@ -199,6 +181,8 @@ Type TIsland
 		Local surf:TSurface = CreateSurface( Self.Mesh )
 		Local x:Int, y:Int
 		Local VertData:Int[,] = CreateNegativeOneArray(Self.Terrain.Dimensions()[0] + 1, Self.Terrain.Dimensions()[1] + 1)
+		Local Edge:TList = New TList
+		' Generate the surface.
 		For x = 0 To Self.Terrain.Dimensions()[0] - 1
 			For y = 0 To Self.Terrain.Dimensions()[1] - 1
 				If Self.Terrain[x, y] > -1
@@ -211,9 +195,9 @@ Type TIsland
 				EndIf
 			Next
 		Next
-		'EntityColor(Self.Mesh, 0, 255, 0)
+		
 		UpdateNormals(Self.Mesh)
-		EntityTexture(Self.Mesh, LoadTexture("GFX/tex/grass.png"))
+		EntityTexture(Self.Mesh, Texture)
 	EndMethod
 	
 	Method ReadTerrainData(stream:TStream)
@@ -263,6 +247,9 @@ EndIf
 Config = ParseConfig(cfgpath)
 
 InitiateGraphics()
+TIsland.Texture = LoadTexture("GFX/tex/grass.png")
+LoadBlimpTemplates()
+DebugLog("Number of Blimp Templates: " + Len(TBlimpTemplate.List))
 
 'Purely test code
 Local town1:TStation = New TStation
@@ -284,13 +271,14 @@ Global Moneez:Int = 0
 Global Currency:String = String(Config.ValueForKey("currency"))
 If Currency = "" Then Currency = "$"
 
-Global CamCon:TCameraController = TCameraController.CreateCameraController( 0.8 )
+Global CamCon:TCameraController = TCameraController.CreateCameraController( 0.85 )
 PositionEntity( CamCon.Camera, 0, 20, -30 )
 RotateEntity( CamCon.Camera, 45, 0, 0 )
 CameraClsColor(CamCon.Camera, 125, 200, 255)
 
 Local CloudPlane:TEntity = CreateClooouuud()
 PositionEntity CloudPlane, 0, -10, 0
+Local CloudX:Float, CloudY:Float
 
 Local Light:TLight = CreateLight()
 RotateEntity(Light, 45, 45, 0)
@@ -321,6 +309,7 @@ Local wfon:Int
 Repeat
 	CamCon.UpdateControls()
 	blimp.Update()
+	UpdateClooouuuds(CloudX, CloudY, CloudPlane)
 	If KeyHit(KEY_W) Then wfon = 1 - wfon
 	Wireframe(wfon)
 	
@@ -363,9 +352,6 @@ Function InitiateGraphics()
 		galias = Int(String(Config.ValueForKey("antialiasing")))
 		If ghertz = 0 Then ghertz = 60
 		If gdepth = 0 Then gdepth = 32
-		If Not GraphicsModeExists( gwidth, gheight, gdepth, ghertz ) Then
-			Throw "Invalid graphics settings in config. :/ (" + gwidth + "x" + gheight + "@" + ghertz + " " + gdepth + "bit)"
-		EndIf
 		
 		If Not IsInConfig(["graphicswidth", "graphicsheight"], Config)
 			'First launch without configuration
@@ -380,6 +366,10 @@ Function InitiateGraphics()
 			Else
 				Throw "Desktop resolution not supported. Thefuck?"
 			EndIf
+		EndIf
+		
+		If Not GraphicsModeExists( gwidth, gheight, gdepth, ghertz ) Then
+			Throw "Invalid graphics settings in config. :/ (" + gwidth + "x" + gheight + "@" + ghertz + " " + gdepth + "bit)"
 		EndIf
 	Catch e:String
 		Print(e)
