@@ -80,5 +80,5 @@ Function UpdateGUIInput( mx:Int, my:Int, mh:Int[3], md:Int[3] )
 EndFunction
 
 Function PointInRect:Int( x:Int, y:Int, rx:Int, ry:Int, w:Int, h:Int )
-	If x > rx And x < rx + w And y > ry And y < rx + h Then Return True
+	If x > rx And x < rx + w And y > ry And y < ry + h Then Return True
 EndFunction
