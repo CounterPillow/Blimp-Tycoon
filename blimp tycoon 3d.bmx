@@ -3,6 +3,7 @@ Framework BRL.Blitz
 Import BRL.Max2D
 Import BRL.Map
 Import BRL.Timer
+Import BRL.TimerDefault
 Import sidesign.minib3d
 
 Include "config.bmx"
